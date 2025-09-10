@@ -1,7 +1,7 @@
 # About
 This project is an exercise in data cleanup, normalization, and analysis. It uses 3 datasets focused on the 2024-2025 season of the English Premiere League; one dataset to supply official fixtures, another for row-level player statistics per match, and lastly one for overall match statistics and information.
 
-Data sources were as follows:
+Data sources:
 1. EPL Player Match Data: https://www.kaggle.com/datasets/eduardopalmieri/premier-league-player-stats-season-2425
 2. EPL Fixture Data: https://www.kaggle.com/datasets/secretglory/epl-fixtures-list-2024-2025
 3. EPL Match Data: Scraped from https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures
