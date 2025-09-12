@@ -5,7 +5,7 @@ SELECT
     COUNT(DISTINCT s.match_id) AS matches_played,
     r.ref_name AS last_referee,
     v.venue_name AS last_venue
-FROM player_match_stats s
+FROM pl_match_stats s
 JOIN pl_players p
     ON s.player_id = p.player_id
 JOIN pl_teams t
@@ -27,7 +27,7 @@ WITH player_season AS (
         SUM(s.Goals) AS goals,
         SUM(s.Assists) AS assists,
         SUM(s.Minutes) AS minutes_played
-    FROM player_match_stats s
+    FROM pl_match_stats s
     JOIN pl_matches m ON s.match_id = m.match_id
     WHERE m.match_date BETWEEN '2024-08-01' AND '2025-05-31'
     GROUP BY s.player_id
@@ -43,7 +43,7 @@ WITH team_performance AS (
         match_id,
         SUM(Goals) AS team_goals,
         SUM(Assists) AS team_assists
-    FROM player_match_stats
+    FROM pl_match_stats
     GROUP BY team_id, match_id
 )
 SELECT t.team_name, tp.team_goals, tp.team_assists
