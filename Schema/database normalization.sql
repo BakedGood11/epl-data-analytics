@@ -90,4 +90,3 @@ UPDATE raw_player_stats r
 JOIN pl_players p
     ON p.player_name = r.Player
 SET r.player_id = p.player_id;
-###################################################################################

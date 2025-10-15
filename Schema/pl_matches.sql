@@ -43,8 +43,8 @@ CREATE TABLE pl_matches (
     away_team_id VARCHAR(50),
     home_score INT,
     away_score INT,    
-    xG DECIMAL(4,2),
-    xG_away DECIMAL(4,2),
+    home_xG DECIMAL(4,2),
+    away_xG DECIMAL(4,2),
     venue_id INT,
     Attendance INT,
     Referee VARCHAR(100)
