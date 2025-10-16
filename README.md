@@ -22,3 +22,5 @@ In order to maximize efficiency when querying for analysis, I split the data fro
 
 ## Quiz
 Included in this repo are self-imposed quizzes I drafted with the help of ChatGPT. 
+
+![schema_diagram](epl-schema-diagram.png)
