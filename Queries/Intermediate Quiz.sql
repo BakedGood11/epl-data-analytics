@@ -2,12 +2,50 @@
 ## Use pl_player_stats, pl_matches, and pl_teams to find all teams where
 ## the sum of goals scored by players does not match the total goals scored officially (home + away) in matches.
 
-
+WITH player_goals AS (
+    SELECT
+        t.team_id,
+        t.team_name,
+        SUM(s.goals) AS GoalsFor
+    FROM pl_player_stats s
+    JOIN pl_teams t
+        ON s.team_id = t.team_id
+    GROUP BY team_name
+),
+official_score AS (
+    SELECT
+        t.team_id,
+        t.team_name,
+        SUM(CASE WHEN t.team_id = m.home_team_id THEN m.home_score
+                 WHEN t.team_id = m.away_team_id THEN m.away_score
+                 ELSE 0 END) AS GF,
+        SUM(CASE WHEN t.team_id = m.home_team_id THEN m.away_score
+                 WHEN t.team_id = m.away_team_id THEN m.home_score
+                 ELSE 0 END) AS GA
+    FROM pl_teams t
+    JOIN pl_matches m
+        ON t.team_id IN (m.home_team_id, m.away_team_id)
+    GROUP BY t.team_name
+)
+SELECT
+    t.team_name,
+    os.GF AS Official_Goals_For,
+    pg.GoalsFor AS Player_Goals,
+    (os.GF - pg.GoalsFor) AS Recorded_Difference
+FROM pl_teams t
+JOIN player_goals pg
+    ON t.team_id = pg.team_id
+JOIN official_score os
+    ON t.team_id = os.team_id
+WHERE os.GF != pg.GoalsFor
+;
 
 ## 2. The “Referee Bias” Hypothesis
 ## Using pl_matches, pl_referees, and pl_teams, calculate the average goals scored by home teams under each referee.
 ## Then, rank referees by that average.
 ## Goal: identify if any referee’s matches statistically lean toward home wins.
+
+
 
 
 

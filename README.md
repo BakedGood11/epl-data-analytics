@@ -15,10 +15,10 @@ pl_teams: team_id (Primary Key), team_name
 pl_matches: match_id (Primary Key), fixture_id (Foreign Key), match_date, Wk, Day, Time, home_team_id, away_team_id, home_score, away_score, home_xG, away_xG, venue_id (Foreign Key), Attendance, ref_id
 
 ## Cleanup
-Cleanup was mostly about making sure naming conventions were parallel across all tables (Manchester United vs Manchester Utd)
+Cleanup was mostly about making sure naming conventions were parallel across all tables (Manchester United vs Manchester Utd). There are instances of a wrong entry in the referee column of the pl_matches table. I've corrected what I can but given the level of data and the purpose of this project I've chosen not to do a full replacement until later on. 
 
 ## Normalizing Data
 In order to maximize efficiency when querying for analysis, I split the data from the raw sets into six (6) tables; pl_players, pl_teams, pl_referees, pl_venues, pl_matches, and pl_player_stats. Each table has its own unique Primary Key and references Foreign Keys from the others where applicable, with the goal achieving at least 3rd Normal Form.
 
 ## Quiz
-Included in this repo is a self-imposed quiz I drafted with the help of ChatGPT. 
+Included in this repo are self-imposed quizzes I drafted with the help of ChatGPT. 
