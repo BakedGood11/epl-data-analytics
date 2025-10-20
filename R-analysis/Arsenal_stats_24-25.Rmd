@@ -1,0 +1,67 @@
+---
+title: "Arsenal_stats_24-25"
+output: html_document
+---
+# Initial package installation
+install.packages(c("DBI", "RMariaDB"))
+library(DBI)
+library(RMariaDB)
+library(ggplot2)
+library(dplyr)
+library(dbplyr)
+library(dbplot)
+library(ggplot2)
+
+# Connecting to the MariaDB server in homelab
+readRenviron("~/.Renviron")
+
+# test
+Sys.getenv("MARIADB_HOST") 
+
+con <- dbConnect(
+  RMariaDB::MariaDB(),
+  host = Sys.getenv("MARIADB_HOST"),
+  port = as.numeric(Sys.getenv("MARIADB_PORT")),
+  user = Sys.getenv("MARIADB_USER"),
+  password = Sys.getenv("MARIADB_PWD"),
+  dbname = Sys.getenv("MARIADB_PL_DB")
+)
+
+## Exploration
+
+dbListTables(con)
+
+dbGetQuery(con, "SELECT * FROM pl_teams LIMIT 5")
+
+matches <- tbl(con, "pl_matches")
+teams <- tbl(con, "pl_teams")
+
+
+matches %>% 
+  inner_join(teams, by = c("home_team_id" = "team_id")) %>% 
+  filter(home_team_id == 1) %>% 
+  summarize(
+  team_name = team_name,
+  avg_goals = mean(home_score)
+  )
+
+arsenal_home <- matches %>% 
+  inner_join(teams, by = c("home_team_id" = "team_id")) %>% 
+  filter(team_name == "Arsenal") %>% 
+  select(match_date, team_name, home_score)
+  
+arsenal_home_df <- collect(arsenal_home)
+
+ggplot(arsenal_home_df, 
+  aes(x = match_date, y = home_score)) +
+  geom_line(color = "red", linewidth = 1) +
+  geom_point(color = "darkred") +
+  labs(
+  title = "Arsenal, Home Goals per Match EPL 24-25",
+  x = "Match Date",
+  y = "Goals Scored"
+  ) +
+  theme_minimal()
+
+
+

@@ -1,0 +1,7 @@
+# Environment and credentials
+.Renviron
+.env
+config.yml
+.Rhistory
+.RData
+.Rproj.user/
