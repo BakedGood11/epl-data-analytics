@@ -13,6 +13,11 @@ Data sources:
 3. EPL Match Data: Scraped from https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures
 (Aggregated match statistics, per team, for the entire season)
 
+Environment:
+1. Homelab Server: Debian 13 running a Dockerized MariaDB instance (data storage and normalization).
+2. Client Machine: CachyOS (Arch Linux) with VSCode (SQL + R extensions) and RStudio for analytical workflow and visualization.
+3. Software Stack: R 4.4, tidyverse ecosystem, RMariaDB connector, Git + GitHub version control.
+
 ## Schema [SQL]
 ** See below for visual diagram **
 pl_players: player_id (Primary Key), player_name, nation
