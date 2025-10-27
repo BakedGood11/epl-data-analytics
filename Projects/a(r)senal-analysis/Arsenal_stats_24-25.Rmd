@@ -128,10 +128,10 @@ arsenal_goal_share <- player_stats_24 %>%
   select(player_name, team_name, position, goals) %>%
   collect() %>% 
   mutate(goal_share = goals / sum(goals, na.rm = TRUE)) %>%
-  mutate(cum_share = cumsum(goal_share)) %>%
   mutate(player_label = paste0(player_name, " (", position, ")")) %>%
   filter(goal_share > 0) %>%
   arrange(-goal_share) %>%
+  mutate(cum_share = cumsum(goal_share)) %>%
   slice_head(n = 5)
 ```
 ## Performance in Perspective
@@ -235,9 +235,7 @@ On this chart we have the top 5 goal shares from that season. We can see that mo
 kable(arsenal_goal_share[, c("player_name", "goals", "goal_share", "cum_share")],
   caption = "figure 5, Cumulative goal share, 2024")
 ```
-In fact, in terms of cumulative shares, Kai Havertz, Gabriel Martinelli, and Leandro Trossard all claim a combined **71.21%** of Arsenal's total goals from 2024-2025. 
-
-Now, we take a look at Arsenal's goal scoring trends over the season. 
+In fact, in terms of cumulative shares, Kai Havertz, Gabriel Martinelli, Leandro Trossard, and Mikel Merino all claim a combined **48.48%** of Arsenal's total goals from 2024-2025. Now, let's take into account Arsenal's goal scoring trends over the season. 
 
 ```{r, fig.dim, fig.width=10, fig.height=5, message=FALSE, echo=FALSE, warning=FALSE}
 ggplot(arsenal_season,
@@ -255,7 +253,9 @@ ggplot(arsenal_season,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   facet_wrap(~location, ncol=1)
 ```
- 
+With the dashed-line showing the rolling averages, we can see that Arsenal's scoring form still suffers from inconsistencies. If anything, in both cases the trend line falls with the recovery in *Home* games not as high as the start of the season. 
+
+The team reported a season-total xG of **`r round(pl_table_24_df %>% filter(team_name == "Arsenal") %>% pull(xg), 2)`**, a far cry from last season's **`r round(pl_table_23_df %>% filter(team_name == "Arsenal") %>% pull(xg), 2)`**. 
 
 
 
