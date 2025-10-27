@@ -5,3 +5,5 @@ config.yml
 .Rhistory
 .RData
 .Rproj.user/
+.vscode/
+.gitignore

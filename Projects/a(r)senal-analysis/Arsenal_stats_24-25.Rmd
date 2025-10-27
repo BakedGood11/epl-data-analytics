@@ -12,10 +12,10 @@ library(RMariaDB)
 library(ggplot2)
 library(dplyr)
 library(dbplyr)
-library(dbplot)
 library(tinytex)
 library(tidyr)
 library(knitr)
+library(zoo)
 ```
 ## Overview ##
 
@@ -33,9 +33,12 @@ I scraped aggregated match data from FBRef and used Kaggle datasets for player-l
 (Official match schedule as published)
 - EPL Match Data: Scraped from https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures 
 (Aggregated match statistics, per team, for the entire season)
+- EPL Season Table, 2024-2025: https://fbref.com/en/comps/9/2024-2025/2024-2025-Premier-League-Stats
+(League table from 2024 for context review)
 - Arsenal Squad Data from 2023-2024: https://fbref.com/en/squads/18bb7c10/2024-2025/matchlogs/c9/schedule/Arsenal-Scores-and-Fixtures-Premier-League
 (Previous season summary stats for context review)
-
+- EPL Season Table, 2023-2024: https://fbref.com/en/comps/9/2023-2024/2023-2024-Premier-League-Stats
+(League table from 2023 for context review)
 
 ## Definition of Terms
 - **GF**: Goals for
@@ -68,9 +71,11 @@ dbListTables(con)
 #### Preparing tables
 matches <- tbl(con, "pl_matches")
 teams <- tbl(con, "pl_teams")
+players <- tbl(con, "pl_players")
 ars_last_season <- tbl(con, "afc_23_24")
 pl_table_24 <- tbl(con, "pl_table_24")
 pl_table_23 <- tbl(con, "pl_table_23_24")
+player_stats_24 <- tbl(con, "pl_player_stats")
 
 ## Initial exploration, df creation
 pl_table_24_df <- pl_table_24 %>% collect()
@@ -78,6 +83,8 @@ pl_table_24_df <- pl_table_24 %>% collect()
 pl_table_23_df <- pl_table_23 %>% collect()
 
 ars_last_season_df <- ars_last_season %>% collect()
+
+
 
 total_goals = ars_last_season_df %>% 
   summarize(sum(gf, na.rm = FALSE))
@@ -108,6 +115,24 @@ arsenal_season <- bind_rows(
   arsenal_home %>% collect(),
   arsenal_away %>% collect()) %>%
   arrange(match_date)
+
+arsenal_season <- arsenal_season %>%
+  arrange(match_date) %>%
+  mutate(rolling_avg = zoo::rollmean(Score, k = 5, fill = NA))
+
+## Aggregating Arsenal's scoring share
+arsenal_goal_share <- player_stats_24 %>%
+  inner_join(players, by = "player_id") %>%
+  inner_join(teams, by = "team_id") %>%
+  filter(team_name == "Arsenal") %>%
+  select(player_name, team_name, position, goals) %>%
+  collect() %>% 
+  mutate(goal_share = goals / sum(goals, na.rm = TRUE)) %>%
+  mutate(cum_share = cumsum(goal_share)) %>%
+  mutate(player_label = paste0(player_name, " (", position, ")")) %>%
+  filter(goal_share > 0) %>%
+  arrange(-goal_share) %>%
+  slice_head(n = 5)
 ```
 ## Performance in Perspective
 Arsenal FC is a Premier League club with a storied history. Over the years, they’ve won 13 English top-flight titles, 14 FA Cups, and 17 FA Community Shields, among other honors. The club also produced *The Invincibles*, the legendary 2003–2004 squad that went an entire Premier League season unbeaten. 
@@ -183,36 +208,56 @@ Which brings us to the actual season in question. As an overview, let's take a l
 
 ```{r pl_24_summ, echo=FALSE, message=FALSE, warning=FALSE}
 kable(pl_table_24_df[, c("rk", "team_name", "gf", "ga", "gd", "pts")],
-  caption = "figure 4, Premier League Table, 2024")
+  caption = "figure 3, Premier League Table, 2024")
 ```
-Again, second place. Arsenal would again show a strong defense with **34** goals conceded throughout the season, beating the champions Liverpool who conceded **41** goals. This would only support critics' claims that Arsenal was in dire need of a more traditional striker. 
+Again, second place despite having the league's best defensive structure. Arsenal's defense conceded only **34** goals throughout the season, beating the champions Liverpool who conceded **41** goals. This only makes it apparent that their difficulties in getting the ball to the back of the net still outweighed their defensive capabilities. 
+
+But who is responsible for that task? At this point in time, Arsenal had its traditional number 9 in the form of Kai Havertz. Combined with their aggressive midfield, we can see where Arsenal pulled most of its goals from. 
+```{r ars_goal_share, echo=FALSE, warning = FALSE, message=FALSE}
+ggplot(arsenal_goal_share, aes(x = "", y = goal_share, fill = player_label)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Arsenal Goal Share, 2024–25",
+    subtitle = "Proportion of team goals per player",
+    caption = "*figure 4, Arsenal Player Goal Contribution, 2024–25*",
+    fill = "Player (Position)"
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(face = "bold")
+  )
+```
+On this chart we have the top 5 goal shares from that season. We can see that most of the team's goals are from a combination of the midfield players but that's not to say Kai Havertz is doing bad, claiming **13%** of the team's total goals. 
+```{r cumulative_share, echo = FALSE, message = FALSE, warning = FALSE}
+kable(arsenal_goal_share[, c("player_name", "goals", "goal_share", "cum_share")],
+  caption = "figure 5, Cumulative goal share, 2024")
+```
+In fact, in terms of cumulative shares, Kai Havertz, Gabriel Martinelli, and Leandro Trossard all claim a combined **71.21%** of Arsenal's total goals from 2024-2025. 
 
 Now, we take a look at Arsenal's goal scoring trends over the season. 
 
-```{r, fig.dim, fig.width=10, fig.height=5, message=FALSE, echo=FALSE}
+```{r, fig.dim, fig.width=10, fig.height=5, message=FALSE, echo=FALSE, warning=FALSE}
 ggplot(arsenal_season,
   aes(x = match_date, y = Score, color = location)) +
   geom_line(linewidth = 1) +
   geom_point() +
+  geom_line(aes(y= rolling_avg, color = location), linewidth = 1.2, linetype = "dashed") +
   scale_x_date(date_breaks = "2 weeks", date_labels = "%b %d") +
   labs(
     x = "Match Date", 
     y = "Goals Scored",
     title = "Arsenal's Performance at Home vs. Away",
     subtitle = "Premier League 2024-2025",
-    caption = "*figure 3, Arsenal Home vs. Away Goals, 2024-2025*") +
+    caption = "*figure 6, Arsenal Home vs. Away Goals, 2024-2025*") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  geom_smooth(method="gam",
-              aes(color = location),
-              se=FALSE, 
-              na.rm=TRUE, 
-              show.legend = TRUE,
-              linetype = "dashed") +
   facet_wrap(~location, ncol=1)
 ```
-A downward trend in *Home* goals over the season is visible while *Away* games show an almost flat trend line. Both can be attributed to drastic changes in performance given how high scoring games are countered by multiple low scores, including consecutive zero (0) goals in two *Away* match ups.  
+ 
 
-## Defe
+
 
 ```{r, disconnect, include=FALSE, message=FALSE}
 #### Disconnect from the DB
