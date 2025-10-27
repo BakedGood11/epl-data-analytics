@@ -1,0 +1,220 @@
+---
+title: "Arsenal Season Stats, EPL '24-'25"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+---
+```{r, warning=FALSE, message=FALSE, include=FALSE}
+#### Initial package calls
+library(DBI)
+library(RMariaDB)
+library(ggplot2)
+library(dplyr)
+library(dbplyr)
+library(dbplot)
+library(tinytex)
+library(tidyr)
+library(knitr)
+```
+## Overview ##
+
+A(r)senal Analysis is an analytical exploration of Arsenal's performance in the **2024-2025** season of the **English Premier League**. The team was chosen because of their ability to outperform league leaders and top contenders in the UEFA Champion's League (particularly their 3-0 win over Real Madrid) yet showing recurring inconsistencies in front of goal.
+
+Throughout the season, fans and pundits alike heralded it as *“Arsenal’s year.”* With Manchester City’s dominance waning, the path to the title seemed open. Yet by May, Liverpool sat atop the table while Arsenal once again finished second. The central question, then, is this: how can a squad strong enough to reach the Champions League semi-finals and challenge England’s best still struggle to convert that dominance into goals?
+
+## Methodology
+I scraped aggregated match data from FBRef and used Kaggle datasets for player-level statistics and the official fixture list. The datasets were stored in a Docker-based MariaDB instance in my homelab for reproducible querying. Using VSCode’s SQL extensions, I cleaned and normalized data directly in SQL, then connected RStudio to the database for statistical exploration and visualization.
+
+### Data Sources
+- EPL Player Match Data: https://www.kaggle.com/datasets/aesika/english-premier-league-player-stats-2425 
+(1 row per player, aggregated statistics for the 2024-2025 season)
+- EPL Fixture Data: https://www.kaggle.com/datasets/secretglory/epl-fixtures-list-2024-2025 
+(Official match schedule as published)
+- EPL Match Data: Scraped from https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures 
+(Aggregated match statistics, per team, for the entire season)
+- Arsenal Squad Data from 2023-2024: https://fbref.com/en/squads/18bb7c10/2024-2025/matchlogs/c9/schedule/Arsenal-Scores-and-Fixtures-Premier-League
+(Previous season summary stats for context review)
+
+
+## Definition of Terms
+- **GF**: Goals for
+- **GA**: Goals against
+- **GD**: Goal difference, (GF - GA)
+- **xG**: Expected goals; the number of goals a team/player is expected to score in a match. **Higher is better**
+- **xGA**: Expected goals against; the number of goals a team is expected to concede in a match. **Lower is better**
+- **xGD**: Expected goal difference; The difference between xG and xGA. **Higher is better**
+
+```{r db-connection, warning=FALSE, message=FALSE, include=FALSE}
+#### Connecting to the MariaDB server in homelab
+readRenviron("~/.Renviron")
+
+con <- dbConnect(
+  RMariaDB::MariaDB(),
+  host = Sys.getenv("MARIADB_HOST"),
+  port = as.numeric(Sys.getenv("MARIADB_PORT")),
+  user = Sys.getenv("MARIADB_USER"),
+  password = Sys.getenv("MARIADB_PWD"),
+  dbname = Sys.getenv("MARIADB_PL_DB")
+)
+```
+
+```{r, verify, warning=FALSE, message=FALSE, include=FALSE}
+#### Verifying connection
+dbListTables(con)
+```
+
+```{r, tables, message=FALSE, warning=FALSE, include=FALSE}
+#### Preparing tables
+matches <- tbl(con, "pl_matches")
+teams <- tbl(con, "pl_teams")
+ars_last_season <- tbl(con, "afc_23_24")
+pl_table_24 <- tbl(con, "pl_table_24")
+pl_table_23 <- tbl(con, "pl_table_23_24")
+
+## Initial exploration, df creation
+pl_table_24_df <- pl_table_24 %>% collect()
+
+pl_table_23_df <- pl_table_23 %>% collect()
+
+ars_last_season_df <- ars_last_season %>% collect()
+
+total_goals = ars_last_season_df %>% 
+  summarize(sum(gf, na.rm = FALSE))
+
+goal_efficiency_23 <- ars_last_season_df %>% 
+  summarize(
+    total_goals = sum(gf, na.rm = FALSE),
+    matches = n(),
+    avg_goals_match = mean(gf, na.rm = FALSE)
+  )
+
+### Collecting Arsenal's scores for home and away matches
+arsenal_home <- matches %>% 
+  inner_join(teams, by = c("home_team_id" = "team_id")) %>% 
+  filter(team_name == "Arsenal") %>% 
+  select(match_date, team_name, home_score) %>% 
+  rename(Score = home_score) %>% 
+  mutate(location = "Home")
+
+arsenal_away <- matches %>% 
+  inner_join(teams, by = c("away_team_id" = "team_id")) %>% 
+  filter(team_name == "Arsenal") %>% 
+  select(match_date, team_name, away_score) %>% 
+  rename(Score = away_score) %>% 
+  mutate(location = "Away")
+
+arsenal_season <- bind_rows(
+  arsenal_home %>% collect(),
+  arsenal_away %>% collect()) %>%
+  arrange(match_date)
+```
+## Performance in Perspective
+Arsenal FC is a Premier League club with a storied history. Over the years, they’ve won 13 English top-flight titles, 14 FA Cups, and 17 FA Community Shields, among other honors. The club also produced *The Invincibles*, the legendary 2003–2004 squad that went an entire Premier League season unbeaten. 
+
+Unfortunately, that level of dominance was not to last. Financial constraints, largely attributed to the construction of the Emirates Stadium, forced a period of austerity that saw the club struggle for more than a decade before showing real signs of resurgence. Enter Mikel Arteta. The former Arsenal captain returned to the club mid-season in 2019 to take up the managerial role. Despite securing an FA Cup title later that season, it would take several years of rebuilding before consistent improvement began to show.
+
+```{r 2023_summ, include=FALSE, message=FALSE, warning=FALSE}
+### Setting up contextual stats
+ars_xga_23 <- pl_table_23_df %>% 
+  filter(team_name == "Arsenal") %>%
+  pull(xga)
+
+ars_xgd_23 <- pl_table_23_df %>%
+  filter(team_name == "Arsenal") %>% 
+  pull(xgd)
+
+manc_xga <- pl_table_23_df %>% 
+  filter(team_name == "Manchester City") %>%
+  pull(xga)
+
+manc_xgd_23 <- pl_table_23_df %>%
+  filter(team_name == "Manchester City") %>%
+  pull(xgd)
+
+liv_xga <- pl_table_23_df %>% 
+  filter(team_name == "Liverpool") %>%
+  pull(xga)
+
+pl_table_top10_23 <- pl_table_23_df %>%
+  arrange(desc(xg)) %>%
+  slice_head(n = 10) %>%
+  select(team_name, xg, xga, xgd)
+
+pl_table_long_23 <- pl_table_top10_23 %>%
+  pivot_longer(cols = c(xg, xga, xgd),
+               names_to = "metric",
+               values_to = "value")
+```
+### Uphill Battles
+The renewed optimism surrounding Arsenal at the start of the 2024–2025 season stemmed from their remarkable form in 2023–2024. There was room to grow, but this was the most competitive the team had been in a long while. Finishing 2nd, the team stood out for a couple of reasons.  
+
+First, the defensive structure they'd developed. For a team long associated with defensive lapses, Arsenal’s 2023 season marked a significant turnaround, recording an xGA of **`r round(ars_xga_23, 2)`**, the lowest in the league. This led to the team conceding only **29** goals throughout the season, with 2023 champions Manchester City conceding **34** in that same season.
+
+```{r pl_23_summ, echo=FALSE, message=FALSE, warning=FALSE}
+kable(pl_table_23_df[, c("rk", "team_name", "gf", "ga", "gd", "pts")],
+  caption = "figure 1, Premier League Table, 2023")
+```
+
+Liverpool, who followed with an xGA of **`r round(liv_xga, 2)`**, conceded **41** goals which underscored how much Arsenal had closed the defensive gap with the very best.
+
+Arsenal's attack, meanwhile, showed potential despite the lack of a traditional number 9 player. Taking a look at the xGs of the top 10 teams, we can see that Arsenal counted themselves among the top when it came to expected goals.  
+
+```{r pl_top10_summ, echo = FALSE, warning = FALSE, message = FALSE, fig.width=10, fig.height=5}
+ggplot(pl_table_long_23,
+  aes(x = team_name, y = value, fill = metric)) +
+  geom_col(position = "dodge") +
+  labs(title = "Top 10 Premier League Teams by xG (2023–24)",
+    caption = "*figure 2, Premier League 2023-2024 Season xG Summary*",
+    x = "Team",
+    y = "Expected Metric Value",
+    fill = "Metric") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 75, hjust = 1)
+) + facet_grid()
+```
+
+The combination of a strong defence with a budding attacking mindset would result in an xGD of **`r round(ars_xgd_23, 2)`**. Manchester City, on the other hand, finished the season with an xGD of **`r round(manc_xgd_23)`**, a little lower than Arsenal's. 
+
+Arsenal FC would then end that campaign with a mean of **`r round(goal_efficiency_23$avg_goals_match, 2)`** goals per match. Combined with an average **`r round(sum(ars_last_season_df$ga) / nrow(ars_last_season_df), 2)`** goals conceded per match, the team appeared poised for another strong run in the following season.
+
+## Who Needs A Striker? 
+Which brings us to the actual season in question. As an overview, let's take a look at the Premier League table at the end of the 2024-2025 season.
+
+```{r pl_24_summ, echo=FALSE, message=FALSE, warning=FALSE}
+kable(pl_table_24_df[, c("rk", "team_name", "gf", "ga", "gd", "pts")],
+  caption = "figure 4, Premier League Table, 2024")
+```
+Again, second place. Arsenal would again show a strong defense with **34** goals conceded throughout the season, beating the champions Liverpool who conceded **41** goals. This would only support critics' claims that Arsenal was in dire need of a more traditional striker. 
+
+Now, we take a look at Arsenal's goal scoring trends over the season. 
+
+```{r, fig.dim, fig.width=10, fig.height=5, message=FALSE, echo=FALSE}
+ggplot(arsenal_season,
+  aes(x = match_date, y = Score, color = location)) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  scale_x_date(date_breaks = "2 weeks", date_labels = "%b %d") +
+  labs(
+    x = "Match Date", 
+    y = "Goals Scored",
+    title = "Arsenal's Performance at Home vs. Away",
+    subtitle = "Premier League 2024-2025",
+    caption = "*figure 3, Arsenal Home vs. Away Goals, 2024-2025*") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_smooth(method="gam",
+              aes(color = location),
+              se=FALSE, 
+              na.rm=TRUE, 
+              show.legend = TRUE,
+              linetype = "dashed") +
+  facet_wrap(~location, ncol=1)
+```
+A downward trend in *Home* goals over the season is visible while *Away* games show an almost flat trend line. Both can be attributed to drastic changes in performance given how high scoring games are countered by multiple low scores, including consecutive zero (0) goals in two *Away* match ups.  
+
+## Defe
+
+```{r, disconnect, include=FALSE, message=FALSE}
+#### Disconnect from the DB
+dbDisconnect(con)
+```
