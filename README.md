@@ -5,6 +5,27 @@ This English Premier League data analytics repository is a project aimed at help
 
 Both analyses make use of 3 datasets focused on the 2024-2025 season of the English Premiere League; one dataset to supply official fixtures, another for row-level player statistics per match, and lastly one for overall match statistics and information. The data is then supported with statistics and data from the 2023-2024 season of the Premier League. 
 
+## Folder Structure
+
+### data
+This folder contains the raw and cleaned data used in the analysis.
+- `cleaned_manual`: Contains manually cleaned CSV files.
+- `cleaned_sql`: Contains CSV files cleaned using SQL.
+
+### docs
+This folder contains project documentation, including the schema diagram.
+
+### notebooks
+This folder is for Jupyter notebooks, though it is currently empty.
+
+### projects
+This folder contains the main analysis projects.
+- `a(r)senal-analysis`: R-based analysis of Arsenal FC's performance.
+- `SQL-analysis`: SQL scripts for data cleaning, exploration, and schema creation.
+
+### visuals
+This folder is for visualizations, though it is currently empty.
+
 ## Environment:
 1. Homelab Server: Debian 13 running a Dockerized MariaDB instance (data storage and normalization).
 2. Client Machine: CachyOS (Arch Linux) with VSCode (SQL + R extensions) and RStudio for analytical workflow and visualization.
@@ -35,20 +56,4 @@ Both analyses make use of 3 datasets focused on the 2024-2025 season of the Engl
 6. EPL Season Table, 2023-2024: https://fbref.com/en/comps/9/2023-2024/2023-2024-Premier-League-Stats
 (League table for context review)
 
-## Project Layout
-
-### SQL Phase
-Goal: To build and explore the database foundation. 
-- Loaded local CSVs and created a reproducible schema for the data to live in.
-- Cleaned, Normalized, and Explored the data in the database.
-- Produced key joins for Match, Player, and Fixture data. 
-
-### Analyzing A(R)senal [R]
-Goal: We explore Arsenal's season metrics using R. This section is intended to present statistical analyses and visualizations, using some of R's many packages. 
-- Connected and queried the MariaDB server using RMariaDB connectors for RStudio.
-- Explored and created visualizations in R.
-- Generated visuals for the narrative of the exploration.
-
-
-
-![schema_diagram](epl-schema-diagram.png)
+![schema_diagram](docs/epl-schema-diagram.png)
