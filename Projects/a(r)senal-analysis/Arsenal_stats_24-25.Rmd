@@ -5,15 +5,21 @@ output:
     toc: true
     toc_depth: 2
     latex_engine: xelatex
+    includes:
+      in_header: preamble.tex
   md_document:
     toc: true
     toc_depth: 2
   html_document:
     toc: true
-    toc_depth: '2'
+    toc_depth: 2
     df_print: paged
+    theme: flatly
+    self_contained: true
+    fig_caption: true
+    code_folding: hide
 ---
-```{r, warning=FALSE, message=FALSE, include=FALSE}
+```{r setup, warning=FALSE, message=FALSE, include=FALSE}
 #### Initial package calls
 library(DBI)
 library(RMariaDB)
@@ -27,6 +33,32 @@ library(zoo)
 library(ggrepel)
 library(ggcorrplot)
 library(stats)
+library(ggpmisc)
+library(broom)
+library(kableExtra)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  fig.width = 9,
+  fig.height = 5,
+  fig.retina = 2,
+  fig.pos = "H",
+  out.width = "100%",
+  dev = "svg",
+  dpi = 300
+)
+
+if (knitr::is_html_output()) {
+  options(knitr.table.format = "html")
+} else {
+  options(knitr.table.format = "latex")
+}
+```
+```{r global-options, include=FALSE}
+knitr::opts_chunk$set(fig.pos = "H", out.extra = "keepaspectratio=true")
 ```
 ## Overview ##
 
@@ -36,8 +68,9 @@ Throughout the season, fans and pundits alike heralded it as *“Arsenal’s yea
 
 ## Research Questions
 
-- For a team that's beaten highly-rated teams such as Real Madrid and Manchester City, why is Arsenal's domestic performance inconsistent? 
-- How well do xG and xGA predict actual team performance? 
+- What factors contribute to Arsenal’s inconsistent domestic performance, despite victories over top-tier teams like Real Madrid and Manchester City?
+- To what extent do expected goals (xG) and expected goals against (xGA) reliably predict actual team outcomes?
+- How does Arsenal's goal-scoring distribution among players impact their overall offensive effectiveness?
 
 ## Methodology
 I scraped aggregated match data from FBRef and used Kaggle datasets for player-level statistics and the official fixture list. The datasets were stored in a Docker-based MariaDB instance in my homelab for reproducible querying. Using VSCode’s SQL extensions, I cleaned and normalized data directly in SQL, then connected RStudio to the database for statistical exploration and visualization. With R, I performed statistical analyses to understand Arsenal's team performance and studied the correlation of metrics like xG and xGA alongside team performance to understand how well these metrics predict a team's performance. 
@@ -100,8 +133,18 @@ pl_table_24_df <- pl_table_24 %>% collect()
 
 pl_table_23_df <- pl_table_23 %>% collect()
 
+## Tables for regression analysis
+pl_table_23_df$season <- "2023-2024"
+pl_table_24_df$season <- "2024-2025"
+
+pl_table_combined <- bind_rows(pl_table_23_df, pl_table_24_df)
+
+xg_all <- pl_table_combined %>%
+  select(team_name, gf, ga, xg, xga, season)
+
 ars_last_season_df <- ars_last_season %>% collect()
 
+## Collecting Player Performance Data from 2024-2025
 ars_players_24 <- player_stats_24 %>%
   inner_join(players, by = c("player_id" = "player_id")) %>%
   inner_join(teams, by = c("team_id" = "team_id")) %>%
@@ -109,10 +152,10 @@ ars_players_24 <- player_stats_24 %>%
   select(team_name, player_name, position, appearances, minutes, goals, assists, shots_total, shots_on_target, conversion_rate, pass_completion_rate, progressive_carries, carries_ended_with_goal, carries_ended_with_assist, carries_ended_with_shot, carries_ended_with_chance) %>%
   collect()
 
-total_goals = ars_last_season_df %>% 
+total_goals <- ars_last_season_df %>%
   summarize(sum(gf, na.rm = FALSE))
 
-goal_efficiency_23 <- ars_last_season_df %>% 
+goal_efficiency_23 <- ars_last_season_df %>%
   summarize(
     total_goals = sum(gf, na.rm = FALSE),
     matches = n(),
@@ -120,23 +163,24 @@ goal_efficiency_23 <- ars_last_season_df %>%
   )
 
 ### Collecting Arsenal's scores for home and away matches
-arsenal_home <- matches %>% 
-  inner_join(teams, by = c("home_team_id" = "team_id")) %>% 
-  filter(team_name == "Arsenal") %>% 
-  select(match_date, team_name, home_score) %>% 
-  rename(Score = home_score) %>% 
+arsenal_home <- matches %>%
+  inner_join(teams, by = c("home_team_id" = "team_id")) %>%
+  filter(team_name == "Arsenal") %>%
+  select(match_date, team_name, home_score) %>%
+  rename(Score = home_score) %>%
   mutate(location = "Home")
 
-arsenal_away <- matches %>% 
-  inner_join(teams, by = c("away_team_id" = "team_id")) %>% 
-  filter(team_name == "Arsenal") %>% 
-  select(match_date, team_name, away_score) %>% 
-  rename(Score = away_score) %>% 
+arsenal_away <- matches %>%
+  inner_join(teams, by = c("away_team_id" = "team_id")) %>%
+  filter(team_name == "Arsenal") %>%
+  select(match_date, team_name, away_score) %>%
+  rename(Score = away_score) %>%
   mutate(location = "Away")
 
 arsenal_season <- bind_rows(
   arsenal_home %>% collect(),
-  arsenal_away %>% collect()) %>%
+  arsenal_away %>% collect()
+) %>%
   arrange(match_date)
 
 arsenal_season <- arsenal_season %>%
@@ -162,17 +206,17 @@ Arsenal FC is a Premier League club with a storied history. Over the years, they
 
 Unfortunately, that level of dominance was not to last. Financial constraints, largely attributed to the construction of the Emirates Stadium, forced a series of challenges that saw the club struggle for more than a decade before showing real signs of resurgence. Enter Mikel Arteta. The former Arsenal captain returned to the club mid-season in 2019 to take up the managerial role. Despite securing an FA Cup title later that season, it would take several years of rebuilding before consistent, sustainable improvement began to show.
 
-```{r 2023_summ, include=FALSE, message=FALSE, warning=FALSE}
+```{r 2023_summ_data, include=FALSE, message=FALSE, warning=FALSE}
 ### Setting up contextual stats
-ars_xga_23 <- pl_table_23_df %>% 
+ars_xga_23 <- pl_table_23_df %>%
   filter(team_name == "Arsenal") %>%
   pull(xga)
 
 ars_xgd_23 <- pl_table_23_df %>%
-  filter(team_name == "Arsenal") %>% 
+  filter(team_name == "Arsenal") %>%
   pull(xgd)
 
-manc_xga <- pl_table_23_df %>% 
+manc_xga <- pl_table_23_df %>%
   filter(team_name == "Manchester City") %>%
   pull(xga)
 
@@ -180,7 +224,7 @@ manc_xgd_23 <- pl_table_23_df %>%
   filter(team_name == "Manchester City") %>%
   pull(xgd)
 
-liv_xga <- pl_table_23_df %>% 
+liv_xga <- pl_table_23_df %>%
   filter(team_name == "Liverpool") %>%
   pull(xga)
 
@@ -190,9 +234,11 @@ pl_table_top10_23 <- pl_table_23_df %>%
   select(team_name, xg, xga, xgd)
 
 pl_table_long_23 <- pl_table_top10_23 %>%
-  pivot_longer(cols = c(xg, xga, xgd),
-               names_to = "metric",
-               values_to = "value")
+  pivot_longer(
+    cols = c(xg, xga, xgd),
+    names_to = "metric",
+    values_to = "value"
+  )
 
 ars_best_attendance <- ars_players_24 %>%
   arrange(-minutes) %>%
@@ -215,106 +261,177 @@ ars_players_24_finishing <- ars_players_24 %>%
     clinical_finishing_rate = goals / shots_on_target
   )
 
+## Pearson test
 cor_23_xg <- cor.test(pl_table_23_df$xg, pl_table_23_df$gf, method = "pearson")
 cor_23_xga <- cor.test(pl_table_23_df$xga, pl_table_23_df$ga, method = "pearson")
 
 
 corr_matrix_23 <- pl_table_23_df %>%
-  select(gf, ga, gd, xg, xga, xgd) %>% 
+  select(gf, ga, gd, xg, xga, xgd) %>%
   cor(use = "complete.obs", method = "pearson")
+
+## Regression analysis
+model_xg_gf <- lm(gf ~ xg * season, data = xg_all)
+model_summary <- tidy(model_xg_gf)
+glance_summary <- glance(model_xg_gf)
+summary(model_xg_gf)
 ```
-### Uphill Battles
+### Expecting Success
 The renewed optimism surrounding Arsenal at the start of the 2024–2025 season stemmed from their remarkable form in 2023–2024. There was room to grow, but this was the most competitive the team had been in a long while. Finishing 2nd, the team stood out for a couple of reasons, but particularly for their expected metrics at the end of the season. In this section, we use aggregated 2023-2024 season data to test how closely related expected metrics like xG and xGA are to actual team performance across the Premier League.   
 
 To start, we take a look at the defensive structure Arsenal had developed. For a team long associated with defensive lapses, Arsenal’s 2023 season marked a significant turnaround, recording an xGA of **`r round(ars_xga_23, 2)`**, the lowest in the league. This led to the team conceding only **29** goals throughout the season, with 2023 champions Manchester City conceding **34** in that same season.
 
-```{r pl_23_summ, echo=FALSE, message=FALSE, warning=FALSE}
+```{r table_1, message=FALSE, warning=FALSE, results='asis', fig.align = "center"}
 kable(pl_table_23_df[, c("rk", "team_name", "gf", "ga", "gd", "pts", "xg", "xga")],
-  caption = "figure 1, Premier League Table, 2023")
+  format = "pipe",
+  booktabs = TRUE,
+  longtable = TRUE,
+  caption = "Premier League Table Summary, 2023-2024 Season"
+)
 ```
 
 Liverpool, who followed with an xGA of **`r round(liv_xga, 2)`**, conceded **41** goals which underscored how much Arsenal had closed the defensive gap with the very best. Arsenal's attack, meanwhile, showed potential despite the lack of a traditional number 9 player. 
 
-```{r epl_23_g_xg, echo = FALSE, warning = FALSE, message = FALSE, fig.align="center"}
-ggplot(pl_table_23_df,
-  aes(x = xg, y = gf, color = team_name)) +
+```{r epl_23_g_xg, echo = FALSE, warning = FALSE, message = FALSE, fig.align="center", fig.cap = "Relationship between Goals Scored and Expected Goals by Team (2023-24)"}
+ggplot(
+  pl_table_23_df,
+  aes(x = xg, y = gf, color = team_name)
+) +
   geom_point() +
-  labs(title = "Goals For v.s. Expected Goals, EPL 2023",
-  caption = "Figure 2: Premier League 2023 GF/xG Scatterplot",
-  x = "Expected Goals",
-  y = "Goals For"
+  labs(
+    title = "Goals For vs. Expected Goals, EPL 2023",
+    x = "Expected Goals",
+    y = "Goals For"
   ) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40", ) +
   geom_text_repel(aes(label = team_name), size = 3) +
   theme(legend.position = "none")
-
 ```
 
 In the chart above, teams above the line are those that over performed, or those that scored more goals than expected (GF - xG). We can see that Arsenal counted themselves among the top when it came to expected goals.  
 
-```{r pl_top10_summ, echo = FALSE, warning = FALSE, message = FALSE, fig.width=10, fig.height=5}
-ggplot(pl_table_long_23,
-  aes(x = team_name, y = value, fill = metric)) +
+```{r pl_top10_summ, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center", fig.cap = "Expected Goals, Expected Goals Against, and Expected Goal Difference for Top 10 Teams"}
+ggplot(
+  pl_table_long_23,
+  aes(x = team_name, y = value, fill = metric)
+) +
   geom_col(position = "dodge") +
-  labs(title = "Top 10 Premier League Teams by xG (2023–24)",
-    caption = "Figure 3: Premier League 2023-2024 Season xG Summary",
+  labs(
+    title = "Top 10 Premier League Teams by xG (2023–24)",
     x = "Team",
-    y = "Expected Metric Value",
-    fill = "Metric") +
+    y = "Expected Metric Value"
+  ) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 75, hjust = 1)
-) + facet_grid()
+  theme(axis.text.x = element_text(angle = 75, hjust = 1)) +
+  facet_grid()
 ```
 
 The combination of a strong defence with a budding attacking mindset would result in an xGD of **`r round(ars_xgd_23, 2)`**. Manchester City, on the other hand, finished the season with an xGD of **`r round(manc_xgd_23)`**, a little lower than Arsenal's. This naturally drives us towards the question: *do xG and xGA* **actually** *correlate to the actual performance of a team?*.
 
-```{r cor_matrix_23, echo = FALSE, message = FALSE, warning = FALSE}
-ggcorrplot(corr_matrix_23, lab = TRUE, title = "Correlation Matrix: Premier League 2023-2024",
+```{r cor_matrix_23, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Correlation Heatmap, Premier League 2023-2024 Season", fig.align="center", fig.pos="H"}
+ggcorrplot(corr_matrix_23,
+  lab = TRUE, title = "Correlation Matrix: Premier League 2023-2024",
   ggtheme = ggplot2::theme_minimal(),
-  type = "lower")
+  type = "lower"
+)
 ```
-In this heatmap, we can see that for the 2023-2024 season the expected metrics accurately described a team's performance. The relationship is particularly strong with *xG* and *Goals For*, showcasing an *r* of **`r round(cor_23_xg$estimate, 2)`**. While not as strong as that of xG-GF, **xGA and GA** also show a tight relationship with an **r** of **`r round(cor_23_xga$estimate, 2)`**. The result then is a tightly related xGD-GD r of **0.95**.
 
-Arsenal FC would then end that campaign with a mean of **`r round(goal_efficiency_23$avg_goals_match, 2)`** goals per match. Combined with an average **`r round(sum(ars_last_season_df$ga) / nrow(ars_last_season_df), 2)`** goals conceded per match, the team appeared poised for another strong run in the following season.
+In this heatmap, we can see that for the 2023-2024 season the expected metrics accurately described a team's performance. The relationship is particularly strong with *xG* and *Goals For*, showcasing an *r* of **`r round(cor_23_xg$estimate, 2)`**. While not as strong as that of xG-GF, **xGA and GA** also show a tight relationship with an **r** of **`r round(cor_23_xga$estimate, 2)`**. The result then is a tightly related xGD-GD **r** of **0.95**.
 
-## Who Needs A Striker? 
+Let's again compare the xG-GF relationship, but for the 2024-2025 season. We'll also factor in the previous season's data to see if there's any observable change or trend and use regression analysis to support our observations.
+
+```{r reg_model_xg_gf, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", fig.cap = "Season-by-Season Comparison of Goals vs Expected Goals with Regression Lines"}
+ggplot(
+  xg_all,
+  aes(x = xg, y = gf, color = season)
+) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_poly_eq(
+    aes(label = paste(..eq.label.., ..rr.label.., ..p.value.label.., sep = "~~~")),
+    formula = y ~ x,
+    parse = TRUE
+  ) +
+  labs(
+    title = "Goals For vs. Expected Goals Comparison",
+    x = "Expected Goals (xG)",
+    y = "Goals For (GF)"
+  ) +
+  theme_minimal()
+```
+
+Similar to the previous scatterplot comparison, teams above the line are over performers, and vice versa for those under. The steeper regression line for the 2023-2024 season hints at a tighter relationship between xG and GF; the 2024-2025 season's line, while still positive, suggests a weaker correlation. 
+
+```{r model_summary, echo=FALSE, message=FALSE, warning=FALSE}
+kable(model_summary,
+  format = "pipe",
+  booktabs = TRUE,
+  longtable = TRUE,
+  escape = TRUE,
+  caption = "Regression Analysis Summary: Goals For vs Expected Goals (2023-2025 Seasons)"
+)
+```
+
+In either case, the relationships are statistically significant and positive, with p-values and r-squared values supporting the strength of these correlations. In the table above we can see the exact coefficients for the regression analysis, where p-values for both seasons are less than 0.05, which indicates statistical significance. The $r^2$ value of **`r round(glance_summary$r.squared, 2)`** implies that approximately **`r round(glance_summary$r.squared * 100, 2)`**% of the variance in Goals For (actual goals scored) can be explained by the Expected Goals (xG) of each team.
+
+Arsenal FC would then end the 2023 campaign with a mean of **`r round(goal_efficiency_23$avg_goals_match, 2)`** goals per match. Combined with an average **`r round(sum(ars_last_season_df$ga) / nrow(ars_last_season_df), 2)`** goals conceded per match, the team appeared poised for another strong run in the following season.
+
+## Defense Wins Championships, Maybe
 Which brings us to the actual season in question. As an overview, let's take a look at the Premier League table at the end of the 2024-2025 season.
 
-```{r pl_24_summ, echo=FALSE, message=FALSE, warning=FALSE}
+```{r table_6, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center"}
 kable(pl_table_24_df[, c("rk", "team_name", "gf", "ga", "gd", "pts", "xg", "xga")],
-  caption = "Figure 4: Premier League Table, 2024")
+  format = "pipe",
+  booktabs = TRUE,
+  longtable = TRUE,
+  escape = TRUE,
+  caption = "Premier League Table Summary, 2024-2025 Season"
+)
 ```
-Again, second place despite having the league's best defensive structure. Arsenal's defense conceded only **34** goals throughout the season, beating the champions Liverpool who conceded **41** goals. This only makes it apparent that their difficulties in getting the ball to the back of the net still outweighed their defensive capabilities. 
+Again, second place despite having the league's best defensive structure. Arsenal's defense conceded only **34** goals throughout the season, beating the champions Liverpool who conceded **41** goals. This only makes it apparent that their difficulties in getting the ball to the back of the net still outweighed their defensive capabilities. The team would end the season with a total xG of **`r round(arsenal_xg_24, 2)`**, a far cry from last season's **`r round(arsenal_xg_23, 2)`**. 
 
-```{r epl_24_g_xg, echo = FALSE, warning = FALSE, message = FALSE, fig.align="center"}
-ggplot(pl_table_24_df,
-  aes(x = xg, y = gf, color = team_name)) +
+```{r epl_24_g_xg, echo = FALSE, warning = FALSE, message = FALSE, fig.align="center", fig.cap = "Relationship between Goals Scored and Expected Goals by Team (2024-25)"}
+ggplot(
+  pl_table_24_df,
+  aes(x = xg, y = gf, color = team_name)
+) +
   geom_point() +
-  labs(title = "Goals For v.s. Expected Goals, EPL 2024",
-  caption = "Figure 5: Premier League 2024 GF/xG Scatterplot",
-  x = "Expected Goals",
-  y = "Goals For"
+  labs(
+    title = "Goals For vs. Expected Goals, EPL 2024",
+    x = "Expected Goals",
+    y = "Goals For"
   ) +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40", ) + 
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40", ) +
   geom_text_repel(aes(label = team_name), size = 3) +
   theme(legend.position = "none")
-
 ```
 
-But who is responsible for that task? At this point in time, Arsenal had its number 9 in the form of Kai Havertz, a player who *isn't necessarily a traditional striker*. Combined with their aggressive midfield, we can see where Arsenal pulled most of its goals from. 
+Despite scoring more than their xG, that's still a **`r round(arsenal_xg_change, 2)`%** change in their expected goal performance, a tell-tale sign that their chance creation is **not** what it was. Taking a closer look at the xG of teams across the league, we can also observe that Arsenal's xG is the lowest of the top 5 teams.
 
-```{r cumulative_share, echo = FALSE, message = FALSE, warning = FALSE}
-kable(arsenal_goal_share[, c("player_label", "goals", "goal_share", "cum_share")],
-  caption = "Figure 5: Cumulative goal share, 2024")
+### Who Needs A Striker? 
+
+This begs the question; who is responsible for scoring for Arsenal? At this point in time, Arsenal had its number 9 in the form of Kai Havertz, a player who *isn't necessarily a traditional striker*. Combined with their aggressive midfield, we can see where Arsenal pulled most of its goals from. 
+
+```{r cumulative_share, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center"}
+kable(arsenal_goal_share[, c("player_name", "goals", "goal_share", "cum_share")],
+  format = "pipe",
+  booktabs = TRUE,
+  longtable = TRUE,
+  caption = "Top 5 Arsenal Goal Shares, 2024-2025 Season"
+)
 ```
 
 On this table we have the top 5 goal shares from that season. We can see that most of the team's goals come from the midfield players with a total of **29** goals between them, and Kai Havertz providing a further **9** goals on top of that. 
 
 In fact, in terms of cumulative shares, Kai Havertz, Gabriel Martinelli, Leandro Trossard, and Mikel Merino all claim a combined **48.48%** of Arsenal's total goals from 2024-2025. But while these players threatened the goal when they were on the pitch, injuries would limit their availability. Let's take a look at the players with the most minutes:
 
-```{r ars_player_attendance, echo = FALSE, message = FALSE, warning = FALSE}
-kable(ars_best_attendance, caption = "Figure 6: Top 5 Arsenal Player Attendance")
-
+```{r ars_player_attendance, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center"}
+kable(ars_best_attendance,
+  format = "pipe",
+  booktabs = TRUE,
+  longtable = TRUE,
+  caption = "Top 5 Arsenal Players by Minutes Played, 2024-2025 Season"
+)
 ```
 From this list, only Leandro Trossard provided a big conribution to Arsenal's total goals. While it could be argued that Declan Rice provided **7** assists aside from **4** goals, his role in the team is less "striker" and more "controller". The rest of the attacking or high scoring players would end up injured, further limiting Arsenal's goal-scoring edge. 
 
@@ -322,20 +439,21 @@ What's important is what we don't see---strikers who *aren't* named Kai Havertz.
 
 Now, let's take into account Arsenal's goal scoring trends over the season. 
 
-```{r, fig.dim, fig.width=10, fig.height=5, message=FALSE, echo=FALSE, warning=FALSE}
-ggplot(arsenal_season,
-  aes(x = match_date, y = Score, color = location)) +
+```{r line_10, message=FALSE, echo=FALSE, warning=FALSE, fig.align="center",fig.cap="Seasonal Goal Scoring Trends by Match Location"}
+ggplot(
+  arsenal_season,
+  aes(x = match_date, y = Score, color = location)
+) +
   geom_line(linewidth = 1) +
   geom_point() +
-  geom_line(aes(y= rolling_avg, color = location), linewidth = 1.2, linetype = "dashed") +
+  geom_line(aes(y = rolling_avg, color = location), linewidth = 1.2, linetype = "dashed") +
   scale_x_date(date_breaks = "2 weeks", date_labels = "%b %d") +
   labs(
-    x = "Match Date", 
+    x = "Match Date",
     y = "Goals Scored",
-    title = "Arsenal's Performance at Home vs. Away",
-    subtitle = "Premier League 2024-2025",
-    caption = "Figure 6: Arsenal Home vs. Away Goals, 2024-2025") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    title = "Arsenal's Goal Scoring Form: Home vs. Away Matches",
+    subtitle = "Premier League 2024-2025 Season with 5-Match Rolling Average"
+  )
 ```
 
 With the dashed-line showing the rolling averages, we can see that Arsenal's scoring form still suffers from inconsistencies. This only supports the argument that the team just didn't have the depth they needed to cover for absences caused by injuries. 
@@ -343,32 +461,33 @@ With the dashed-line showing the rolling averages, we can see that Arsenal's sco
 But is it the players' fault? After all, personal challenges could cause players to underperform. This graph shows how efficient each player is in terms of goal-scoring by comparing their **goals per shot on target** against their **total shots on target**. The size of each point determines how many goals that player actually scored. 
 
 
-```{r ars_24_conv, echo = FALSE, warning = FALSE, message = FALSE, fig.align="center", fig.width= 9.5, fig.height=5}
-ggplot(ars_players_24_finishing,
-  aes(x = shots_on_target, y = clinical_finishing_rate, label = player_name)) +
+```{r ars_24_conv, echo = FALSE, warning = FALSE, message = FALSE, fig.align="center", fig.cap = "Player-Level Analysis of Finishing Efficiency and Shot Volume"}
+ggplot(
+  ars_players_24_finishing,
+  aes(x = shots_on_target, y = clinical_finishing_rate, label = player_name)
+) +
   geom_point(aes(size = goals), color = "red", alpha = 0.6) +
   geom_text_repel(size = 3.5, box.padding = 0.5) +
   scale_y_continuous(labels = scales::percent) +
-  labs( title = "Arsenal's Clinical Finishing, 2024-2025",
-  subtitle = "Comparing finishing rate against volume of shots on target",
-  x = "Total Shots on Target",
-  y = "Clinical Finishing Rate (Goals per Shot on Target)",
-  size = "Total Goals"
-  ) + 
+  labs(
+    title = "Arsenal Players' Finishing Efficiency",
+    subtitle = "Goals per Shot on Target vs. Total Shots on Target",
+    x = "Total Shots on Target",
+    y = "Clinical Finishing Rate"
+  ) +
   theme_minimal() +
-  theme(plot.title = element_text(face = "bold"),
-  legend.position = "bottom"
-
-)
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
 ```
 
 With the Y-axis showing us the player's *clinical finishing rate* and the X-axis showing *shots on target*, it's clear that Arsenal's attacking formation can't hit the target as much as they wanted to. Take Martin Odegaard, for example; the player is capable of getting into a position where he can shoot a ball on-target, but the man faces difficulties getting past the keeper. On the other hand, we have players like Kai Havertz who only have a few shots on-target but have a high finishing rate (higher than 100%!). This is an interesting point with the data that shows how the definition of a "Shot on Target" doesn't actually define a goal. For example, a player might shoot and "miss", but have the ball deflect into the goal via own-goal. 
 
-What we can then derive from the chart is that, while still a capable team, Arsenal's problem remains the same; they **need** a number 9, a traditional striker that converts chances into actual goals. 
+What we can then derive from the chart is that, while still a capable team, Arsenal's problem remains the same; they **need** a number 9, a traditional striker that converts chances into actual goals.
 
-The team would end the season with a total xG of **`r round(arsenal_xg_24, 2)`**, a far cry from last season's **`r round(arsenal_xg_23, 2)`**. Despite scoring more than their xG, that's still a **`r round(arsenal_xg_change, 2)`%** change in their expected goal performance, a tell-tale sign that their chance creation is **not** what it was. 
 
-So, to anser the question of, "Who needs a striker?" the answer is definitely Arsenal. 
+So, to answer the question of, "Who needs a striker?" the answer is definitely Arsenal. 
 
 ## Filling in the Gaps
 [section discusses predictive stats/conclusions]
@@ -377,3 +496,4 @@ So, to anser the question of, "Who needs a striker?" the answer is definitely Ar
 #### Disconnect from the DB
 dbDisconnect(con)
 ```
+
