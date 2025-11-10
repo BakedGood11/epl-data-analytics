@@ -1,6 +1,12 @@
 ---
 title: "Arsenal Season Stats, EPL '24-'25"
 output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    latex_engine: xelatex
+    includes:
+      in_header: preamble.tex
   html_document:
     toc: true
     toc_depth: 2
@@ -9,12 +15,6 @@ output:
     self_contained: true
     fig_caption: true
     code_folding: hide
-  pdf_document:
-    toc: true
-    toc_depth: 2
-    latex_engine: xelatex
-    includes:
-      in_header: preamble.tex
 ---
 ```{r, include=FALSE}
 options(tinytex.verbose = TRUE)
