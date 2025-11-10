@@ -1,59 +1,122 @@
-# About
-This English Premier League data analytics repository is a project aimed at helping me learn more about SQL and R. The R analytics section was done in conjunction with the Google Data Analytics Professional Certificate program on Coursera. This involves:
-- an exercise in data cleanup, normalization, and analysis with SQL. 
-- exploratory analysis in R (via MariaDB connector to homelab server)
+# A(r)senal Analysis – English Premier League Data Analytics
 
-Both analyses make use of 3 datasets focused on the 2024-2025 season of the English Premiere League; one dataset to supply official fixtures, another for row-level player statistics per match, and lastly one for overall match statistics and information. The data is then supported with statistics and data from the 2023-2024 season of the Premier League. 
+
+## About
+This repository explores the 2024-2025 English Premier League season using SQL, R, and a Docker-based homelab setup. The goal is to strengthen my skills in data management, analytics, and visualization while producing reproducible workflows.
+
+
+The project involves:
+- Cleaning, normalizing, and aggregating datasets using SQL on a MariaDB instance.
+- Performing exploratory and statistical analysis in R, connected directly to the database.
+- Visualizing team and player-level metrics using RMarkdown and interactive dashboards.
+
+
+The analysis focuses on Arsenal FC and is supplemented with data from the 2023-2024 season for context.
+
+
+---
+
 
 ## Folder Structure
 
+
 ### data
-This folder contains the raw and cleaned data used in the analysis.
-- `cleaned_manual`: Contains manually cleaned CSV files.
-- `cleaned_sql`: Contains CSV files cleaned using SQL.
+Contains all datasets used in the project.
+- `cleaned_manual`: Manually cleaned CSV files.
+- `cleaned_sql`: CSV files cleaned through SQL queries.
+
 
 ### docs
-This folder contains project documentation, including the schema diagram.
+Project documentation including schema diagrams and reference materials.
+
 
 ### notebooks
-This folder is for Jupyter notebooks, though it is currently empty.
+Reserved for Jupyter notebooks. Currently empty.
+
 
 ### projects
-This folder contains the main analysis projects.
-- `a(r)senal-analysis`: R-based analysis of Arsenal FC's performance.
-- `SQL-analysis`: SQL scripts for data cleaning, exploration, and schema creation.
+Main analysis projects:
+- **A(r)senal Analysis – EPL 2024-2025 Season**
+Conducted statistical and regression analysis to understand Arsenal's performance, expected goals (xG), goal efficiency, and player contributions. Produced RMarkdown reports with dynamic visualizations and tables.
+
+
+- **SQL & Database Management – A(r)senal Analysis**
+Designed and managed a MariaDB database to store multi-source Premier League data. Wrote SQL queries for data cleaning, normalization, and aggregation. Integrated the database with a Docker-based homelab setup for reproducible workflows and automated data pipelines.
+
 
 ### visuals
-This folder is for visualizations, though it is currently empty.
+Folder for storing generated plots, charts, and visualizations. Currently empty.
 
-## Environment:
-1. Homelab Server: Debian 13 running a Dockerized MariaDB instance (data storage and normalization).
-2. Client Machine: CachyOS (Arch Linux) with VSCode (SQL + R extensions) and RStudio for analytical workflow and visualization.
-3. Software Stack: R 4.4, tidyverse ecosystem, RMariaDB connector, Git + GitHub version control.
-4. Visualizations: Tableau Public and Metabase.
 
-### R packages used:
+---
+
+
+## Environment
+
+
+- **Homelab Server**: Debian 13 running Dockerized MariaDB for data storage and normalization.
+- **Client Machine**: CachyOS (Arch Linux) with VSCode (SQL and R extensions) and RStudio for analysis and visualization.
+- **Software Stack**: R 4.4, tidyverse ecosystem, RMariaDB connector, Git with GitHub version control.
+- **Visualization Tools**: Tableau Public and Metabase.
+
+
+---
+
+
+## R Packages Used
+
+
 - DBI
 - RMariaDB
 - ggplot2
 - dplyr
 - dbplyr
-- tinytex
+- tidyverse
 - tidyr
 - knitr
+- kableExtra
+- zoo
+- ggrepel
+- ggpmisc
+- broom
+- ggcorrplot
+- tinytex
 
-### Data sources:
-1. EPL Player Match Data: https://www.kaggle.com/datasets/aesika/english-premier-league-player-stats-2425 
-(1 row per player, aggregated statistics for the 2024-2025 season)
-2. EPL Fixture Data: https://www.kaggle.com/datasets/secretglory/epl-fixtures-list-2024-2025 
-(Official match schedule as published)
-3. EPL Match Data: Scraped from https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures 
-(Aggregated match statistics, per team, for the entire season)
-4. Arsenal Squad Data from 2023-2024: https://fbref.com/en/squads/18bb7c10/2024-2025/matchlogs/c9/schedule/Arsenal-Scores-and-Fixtures-Premier-League
-(Previous season summary stats for context review)
-5. EPL Season Table, 2024-2025: https://fbref.com/en/comps/9/2024-2025/2024-2025-Premier-League-Stats
-(League table from 2024 for conte
-6. EPL Season Table, 2023-2024: https://fbref.com/en/comps/9/2023-2024/2023-2024-Premier-League-Stats
-(League table for context review)
 
-![schema_diagram](docs/epl-schema-diagram.png)
+---
+
+
+## Data Sources
+
+
+1. **EPL Player Match Data (2024-2025)**
+[Kaggle Dataset](https://www.kaggle.com/datasets/aesika/english-premier-league-player-stats-2425)
+
+
+2. **EPL Fixture Data (2024-2025)**
+[Kaggle Dataset](https://www.kaggle.com/datasets/secretglory/epl-fixtures-list-2024-2025)
+
+
+3. **EPL Match Data (2024-2025)**
+[FBRef](https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures)
+
+
+4. **Arsenal Squad Data (2023-2024)**
+[FBRef](https://fbref.com/en/squads/18bb7c10/2024-2025/matchlogs/c9/schedule/Arsenal-Scores-and-Fixtures-Premier-League)
+
+
+5. **EPL Season Table (2024-2025)**
+[FBRef](https://fbref.com/en/comps/9/2024-2025/2024-2025-Premier-League-Stats)
+
+
+6. **EPL Season Table (2023-2024)**
+[FBRef](https://fbref.com/en/comps/9/2023-2024/2023-2024-Premier-League-Stats)
+
+
+---
+
+
+## Technical Skills Highlighted
+
+
+![Schema Diagram](docs/epl-schema-diagram.png)
