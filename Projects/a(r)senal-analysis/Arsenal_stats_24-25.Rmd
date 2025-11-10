@@ -1,12 +1,6 @@
 ---
 title: "Arsenal Season Stats, EPL '24-'25"
 output:
-  pdf_document:
-    toc: true
-    toc_depth: 2
-    latex_engine: xelatex
-    includes:
-      in_header: preamble.tex
   html_document:
     toc: true
     toc_depth: 2
@@ -15,6 +9,12 @@ output:
     self_contained: true
     fig_caption: true
     code_folding: hide
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    latex_engine: xelatex
+    includes:
+      in_header: preamble.tex
 ---
 ```{r, include=FALSE}
 options(tinytex.verbose = TRUE)
@@ -47,14 +47,14 @@ knitr::opts_chunk$set(
   fig.retina = 2,
   fig.pos = "H",
   out.width = "100%",
-  dev = "svg",
-  dpi = 300,
   fig.path = "figures/"
 )
 
 if (knitr::is_html_output()) {
+  knitr::opts_chunk$set(dev = "svg", fig.retina = 2) # best for HTML
   options(knitr.table.format = "html")
 } else {
+  knitr::opts_chunk$set(dev = "png", dpi = 150, fig.retina = NULL) # best for PDF
   options(knitr.table.format = "latex")
 }
 ```
@@ -79,18 +79,23 @@ I scraped aggregated match data from FBRef and used Kaggle datasets for player-l
 *Disclaimer: Generative AI was used in this project to help guide the writing of code chunks and SQL queries. Generative AI was ***not** *used to write analyses or full code chunks.* 
 
 ### Data Sources
-- EPL Player Match Data: https://www.kaggle.com/datasets/aesika/english-premier-league-player-stats-2425 
-(1 row per player, aggregated statistics for the 2024-2025 season)
-- EPL Fixture Data: https://www.kaggle.com/datasets/secretglory/epl-fixtures-list-2024-2025 
-(Official match schedule as published)
-- EPL Match Data: Scraped from https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures 
-(Aggregated match statistics, per team, for the entire season)
-- EPL Season Table, 2024-2025: https://fbref.com/en/comps/9/2024-2025/2024-2025-Premier-League-Stats
-(League table from 2024 for context review)
-- Arsenal Squad Data from 2023-2024: https://fbref.com/en/squads/18bb7c10/2024-2025/matchlogs/c9/schedule/Arsenal-Scores-and-Fixtures-Premier-League
-(Previous season summary stats for context review)
-- EPL Season Table, 2023-2024: https://fbref.com/en/comps/9/2023-2024/2023-2024-Premier-League-Stats
-(League table from 2023 for context review)
+- [EPL Player Match Data](https://www.kaggle.com/datasets/aesika/english-premier-league-player-stats-2425)  
+  (1 row per player, aggregated statistics for the 2024-2025 season)
+
+- [EPL Fixture Data](https://www.kaggle.com/datasets/secretglory/epl-fixtures-list-2024-2025)  
+  (Official match schedule as published)
+
+- [EPL Match Data](https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures)  
+  (Aggregated match statistics, per team, for the entire season)
+
+- [EPL Season Table, 2024-2025](https://fbref.com/en/comps/9/2024-2025/2024-2025-Premier-League-Stats)  
+  (League table from 2024 for context review)
+
+- [Arsenal Squad Data from 2023-2024](https://fbref.com/en/squads/18bb7c10/2024-2025/matchlogs/c9/schedule/Arsenal-Scores-and-Fixtures-Premier-League)  
+  (Previous season summary stats for context review)
+
+- [EPL Season Table, 2023-2024](https://fbref.com/en/comps/9/2023-2024/2023-2024-Premier-League-Stats)  
+  (League table from 2023 for context review)
 
 ## Definition of Terms
 - **GF**: Goals for
@@ -196,7 +201,7 @@ arsenal_goal_share <- player_stats_24 %>%
   select(player_name, team_name, position, goals) %>%
   collect() %>%
   mutate(goal_share = goals / sum(goals, na.rm = TRUE)) %>%
-  mutate(player_label = paste0(player_name, " (", position, ")")) %>%
+  # mutate(player_label = paste0(player_name, " (", position, ")")) %>%
   filter(goal_share > 0) %>%
   arrange(-goal_share) %>%
   mutate(cum_share = cumsum(goal_share)) %>%
@@ -293,7 +298,7 @@ kable(pl_table_23_df[, c("rk", "team_name", "gf", "ga", "gd", "pts", "xg", "xga"
 
 Liverpool, who followed with an xGA of **`r round(liv_xga, 2)`**, conceded **41** goals which underscored how much Arsenal had closed the defensive gap with the very best. Arsenal's attack, meanwhile, showed potential despite the lack of a traditional number 9 player. 
 
-```{r epl_23_g_xg, echo = FALSE, warning = FALSE, message = FALSE, fig.align="center", fig.cap = "Relationship between Goals Scored and Expected Goals by Team (2023-24)"}
+```{r epl_23_g_xg, eval=TRUE, cache=FALSE, echo = FALSE, warning = FALSE, message = FALSE, fig.align="center", fig.cap = "Relationship between Goals Scored and Expected Goals by Team (2023-24)"}
 ggplot(
   pl_table_23_df,
   aes(x = xg, y = gf, color = team_name)
@@ -454,7 +459,8 @@ ggplot(
     y = "Goals Scored",
     title = "Arsenal's Goal Scoring Form: Home vs. Away Matches",
     subtitle = "Premier League 2024-2025 Season with 5-Match Rolling Average"
-  )
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 With the dashed-line showing the rolling averages, we can see that Arsenal's scoring form still suffers from inconsistencies. This only supports the argument that the team just didn't have the depth they needed to cover for absences caused by injuries. 
