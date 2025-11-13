@@ -1,5 +1,7 @@
 # A(r)senal Analysis – English Premier League Data Analytics
 
+This project investigates the relationship between expected performance metrics (xG, xGA) and actual outcomes in the 2024–2025 Premier League season. Focusing on Arsenal FC, it demonstrates end-to-end data analytics (SQL-based data cleaning and R-powered regression and visualization) built on a reproducible Dockerized homelab pipeline.
+---
 ## About
 This repository explores the 2024-2025 English Premier League season using SQL, R, and a Docker-based homelab setup. The goal is to strengthen my skills in data management, analytics, and visualization while producing reproducible workflows.
 
@@ -10,6 +12,14 @@ The project involves:
 
 The analysis focuses on Arsenal FC and is supplemented with data from the 2023-2024 season for context.
 
+---
+## Results Summary
+Key findings from the analysis include:
+- Found a strong positive correlation (r = 0.92) between Expected Goals (xG) and Goals For (GF).
+
+- Observed a decline in Arsenal’s xG (−21%) compared to the previous season.
+
+- Identified midfield dependency for goal contribution (48% cumulative share).
 ---
 
 ## Folder Structure
@@ -100,4 +110,4 @@ Folder for storing generated plots, charts, and visualizations. Currently empty.
 ---
 
 ![Schema Diagram](docs/epl-schema-diagram.png)
-*Diagram illustrating the database schema for the EPL data analysis project.*
+*Schema illustrating how match, player, and fixture datasets are relationally modeled in the MariaDB database, enabling multi-season joins and aggregated analytics.*

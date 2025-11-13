@@ -51,10 +51,10 @@ knitr::opts_chunk$set(
 )
 
 if (knitr::is_html_output()) {
-  knitr::opts_chunk$set(dev = "svg", fig.retina = 2) # best for HTML
+  knitr::opts_chunk$set(dev = "svg", fig.retina = 2)
   options(knitr.table.format = "html")
 } else {
-  knitr::opts_chunk$set(dev = "png", dpi = 150, fig.retina = NULL) # best for PDF
+  knitr::opts_chunk$set(dev = "pdf", dpi = 150, fig.retina = NULL)
   options(knitr.table.format = "latex")
 }
 ```
@@ -344,7 +344,7 @@ ggcorrplot(corr_matrix_23,
 
 In this heatmap, we can see that for the 2023-2024 season the expected metrics accurately described a team's performance. The relationship is particularly strong with *xG* and *Goals For*, showcasing an *r* of **`r round(cor_23_xg$estimate, 2)`**. While not as strong as that of xG-GF, **xGA and GA** also show a tight relationship with an **r** of **`r round(cor_23_xga$estimate, 2)`**. The result then is a tightly related xGD-GD **r** of **0.95**.
 
-Let's again compare the xG-GF relationship, but for the 2024-2025 season. We'll also factor in the previous season's data to see if there's any observable change or trend and use regression analysis to support our observations.
+Let's again compare the xG-GF relationship, but fo  r the 2024-2025 season. We'll also factor in the previous season's data to see if there's any observable change or trend and use regression analysis to support our observations.
 
 ```{r reg_model_xg_gf, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", fig.cap = "Season-by-Season Comparison of Goals vs Expected Goals with Regression Lines"}
 ggplot(
