@@ -468,7 +468,7 @@ With the dashed-line showing the rolling averages, we can see that Arsenal's sco
 So can we blame the players? After all, personal challenges could cause players to underperform. We can break down player attacking contributions by taking a look at individual player attacking effort and efficiency. In this scatterplot, the Y-axis shows us the player's *total attacking contributions* (a sum of their progressive carries, carries that ended with assists, chances, goals, or shots) and the X-axis shows us their *pass completion rate*. The size of each point indicates how many progressive carries that player made throughout the season. 
 
 
-```{r attacking_effort, echo = FALSE, warning = FALSE, message = FALSE, fig.align="center", fig.cap = "Arsenal Players' Attacking Effort: Shots on Target vs Total Shots"}
+```{r attacking_effort, echo = FALSE, warning = FALSE, message = FALSE, fig.align="center", fig.cap = "Arsenal Players' Attacking Effort: Pass Completion Rate vs. Total Attacking Contributions"}
 ars_players_24_contrib <- ars_players_24 %>%
   filter(progressive_carries > 0 |
     carries_ended_with_assist > 0 |
