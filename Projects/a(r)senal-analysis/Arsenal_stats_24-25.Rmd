@@ -285,7 +285,7 @@ summary(model_xg_gf)
 ### Expecting Success
 The renewed optimism surrounding Arsenal at the start of the 2024–2025 season stemmed from their remarkable form in 2023–2024. There was room to grow, but this was the most competitive the team had been in a long while. Finishing 2nd, the team stood out for a couple of reasons, but particularly for their expected metrics at the end of the season. In this section, we use aggregated 2023-2024 season data to test how closely related expected metrics like xG and xGA are to actual team performance across the Premier League.   
 
-To start, we take a look at the defensive structure Arsenal had developed. For a team long associated with defensive lapses, Arsenal’s 2023 season marked a significant turnaround, recording an xGA of **`r round(ars_xga_23, 2)`**, the lowest in the league. This led to the team conceding only **29** goals throughout the season, with 2023 champions Manchester City conceding **34** in that same season.
+Let's begin by taking a look at the league table at the end of the 2023-2024 season.
 
 ```{r table_1, message=FALSE, warning=FALSE, results='asis', fig.align = "center"}
 kable(pl_table_23_df[, c("rk", "team_name", "gf", "ga", "gd", "pts", "xg", "xga")],
@@ -295,6 +295,7 @@ kable(pl_table_23_df[, c("rk", "team_name", "gf", "ga", "gd", "pts", "xg", "xga"
   caption = "Premier League Table Summary, 2023-2024 Season"
 )
 ```
+Let's first take a look at the defensive structure Arsenal had developed. For a team long associated with defensive lapses, Arsenal’s 2023 season marked a significant turnaround, recording an xGA of **`r round(ars_xga_23, 2)`**, the lowest in the league. This led to the team conceding only **29** goals throughout the season, with 2023 champions Manchester City conceding **34** in that same season.
 
 Liverpool, who followed with an xGA of **`r round(liv_xga, 2)`**, conceded **41** goals which underscored how much Arsenal had closed the defensive gap with the very best. Arsenal's attack, meanwhile, showed potential despite the lack of a traditional number 9 player. 
 
@@ -342,9 +343,9 @@ ggcorrplot(corr_matrix_23,
 )
 ```
 
-In this heatmap, we can see that for the 2023-2024 season the expected metrics accurately described a team's performance. The relationship is particularly strong with *xG* and *Goals For*, showcasing an *r* of **`r round(cor_23_xg$estimate, 2)`**. While not as strong as that of xG-GF, **xGA and GA** also show a tight relationship with an **r** of **`r round(cor_23_xga$estimate, 2)`**. The result then is a tightly related xGD-GD **r** of **0.95**.
+In this heatmap, we are able to observe the relationship between the variables based on how red or blue a cell is shaded, and more specifically by taking a look at the number in each cell. We can see that for the 2023-2024 season the expected metrics accurately described a team's performance when compared to its "partner" (e.g. xg-GF, xGA-GA). The relationship is particularly strong with *xG* and *Goals For*, showcasing an *r* of **`r round(cor_23_xg$estimate, 2)`**. While not as strong as that of xG-GF, **xGA and GA** also show a tight relationship with an **r** of **`r round(cor_23_xga$estimate, 2)`**. The result then is a tightly related xGD-GD **r** of **0.95**.
 
-Let's again compare the xG-GF relationship, but fo  r the 2024-2025 season. We'll also factor in the previous season's data to see if there's any observable change or trend and use regression analysis to support our observations.
+Let's again compare the xG-GF relationship, but for the 2024-2025 season. We'll also factor in the previous season's data to see if there's any observable change or trend and use regression analysis to support our observations.
 
 ```{r reg_model_xg_gf, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", fig.cap = "Season-by-Season Comparison of Goals vs Expected Goals with Regression Lines"}
 ggplot(
@@ -529,6 +530,9 @@ What we can then derive from the chart is that, while still a capable team, Arse
 ## Filling in the Gaps
 
 So, to answer the question of, "Who needs a striker?" the answer is definitely Arsenal. The team has shown a driven desire to improve, and their defensive record can attest to that. However, without a reliable goal scorer, the team will continue to struggle to convert their dominance into actual wins. 
+
+The tight relationship between expected metrics and actual performance shows us that Arsenal's issues aren't an issue of team effort or player reliability. The players are putting in the effort, but the lack of a traditional striker is costing them crucial goals, thereby lowering their expected metrics and ultimately their position in the league table.
+
 
 
 
