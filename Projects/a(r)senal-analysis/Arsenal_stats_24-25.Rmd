@@ -466,8 +466,7 @@ ggplot(
 
 With the dashed-line showing the rolling averages, we can see that Arsenal's scoring form still suffers from inconsistencies. This only supports the argument that the team just didn't have the depth they needed to cover for absences caused by injuries. 
 
-So can we blame the players? After all, personal challenges could cause players to underperform. We can break down player attacking contributions by taking a look at individual player attacking effort and efficiency. In this scatterplot, the Y-axis shows us the player's *total attacking contributions* (a sum of their progressive carries, carries that ended with assists, chances, goals, or shots) and the X-axis shows us their *pass completion rate*. The size of each point indicates how many progressive carries that player made throughout the season. 
-
+So can we blame the players? After all, personal challenges could cause players to underperform. We can break down player attacking contributions by taking a look at individual player attacking effort and efficiency. 
 
 ```{r attacking_effort, echo = FALSE, warning = FALSE, message = FALSE, fig.align="center", fig.cap = "Arsenal Players' Attacking Effort: Pass Completion Rate vs. Total Attacking Contributions"}
 ars_players_24_contrib <- ars_players_24 %>%
@@ -498,7 +497,8 @@ ggplot(
   theme(legend.position = "bottom")
 ```
 
-With this configuration, we can see that players like Ben White and Martin Odegaard had high pass completion rates and high attacking contributions, while players like Kai Havertz and Leandro Trossard had lower pass completion rates but still contributed significantly to the team's attacking efforts. In fact, we see a somewhat healthy distribution of attacking contributions across the squad, across different positions, indicating that multiple players were involved in the offensive play.
+In this scatterplot, the Y-axis shows us the player's *total attacking contributions* (a sum of their progressive carries, carries that ended with assists, chances, goals, or shots) and the X-axis shows us their *pass completion rate*. The size of each point indicates how many progressive carries that player made throughout the season. 
+In this configuration, we can see that players like Ben White and Martin Odegaard had high pass completion rates and high attacking contributions, while players like Kai Havertz and Leandro Trossard had lower pass completion rates but still contributed significantly to the team's attacking efforts. In fact, we see a somewhat healthy distribution of attacking contributions across the squad, across different positions, indicating that multiple players were involved in the offensive play.
 
 With that in mind, we can confidently say that the players were actively trying to make an effort. The following graph shows how efficient each player is in terms of goal-scoring by comparing their **goals per shot on target** against their **total shots on target**. The size of each point determines how many goals that player actually scored. 
 
