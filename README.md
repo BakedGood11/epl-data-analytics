@@ -40,6 +40,9 @@ Main analysis projects:
 - **A(r)senal Analysis – EPL 2024-2025 Season**
   Conducted statistical and regression analysis to understand Arsenal's performance, expected goals (xG), goal efficiency, and player contributions. Produced RMarkdown reports with dynamic visualizations and tables.
 
+- **Arsenal Python Analysis**
+  Work-in-progress Jupyter notebooks exploring predictive modeling for match results using Python.
+
 - **SQL & Database Management – A(r)senal Analysis**
   Designed and managed a MariaDB database to store multi-source Premier League data. Wrote SQL queries for data cleaning, normalization, and aggregation. Integrated the database with a Docker-based homelab setup for reproducible workflows and automated data pipelines.
 

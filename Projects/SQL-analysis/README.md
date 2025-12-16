@@ -1,14 +1,39 @@
-## Schema [SQL]
-** See below for visual diagram **
-pl_players: player_id (Primary Key), player_name, nation
-pl_teams: team_id (Primary Key), team_name
-pl_matches: match_id (Primary Key), fixture_id (Foreign Key), match_date, Wk, Day, Time, home_team_id, away_team_id, home_score, away_score, home_xG, away_xG, venue_id (Foreign Key), Attendance, ref_id
+# SQL Analysis for EPL Data
 
-## Cleanup [SQL]
-Cleanup was mostly about making sure naming conventions were parallel across all tables (Manchester United vs Manchester Utd). There are instances of a wrong entry in the referee column of the pl_matches table. I've corrected what I can but given the level of data and the purpose of this project I've chosen not to do a full replacement until later on. 
+This project contains all the SQL scripts used for data cleaning, normalization, and exploration of the English Premier League dataset. The scripts are designed to be run on a MariaDB database.
 
-## Normalizing Data [SQL]
-In order to maximize efficiency when querying for analysis, I split the data from the raw sets into six (6) tables; pl_players, pl_teams, pl_referees, pl_venues, pl_matches, and pl_player_stats. Each table has its own unique Primary Key and references Foreign Keys from the others where applicable, with the goal achieving at least 3rd Normal Form.
+## Directory Structure
 
-## General Exploration [SQL]
-The SQL exploration portion is dedicated to league-wide analysis. Found in this section are queries involving mupltiple joins, CTEs, and CASE statements. 
+- **Schema**: Contains the SQL scripts for creating the database schema, including tables and relationships.
+- **Queries**: Contains SQL scripts for data cleanup, exploration, and ad-hoc analysis.
+
+## Schema
+
+The `Schema` directory includes the following files to set up the database:
+
+- `initialization.sql`: The main script to create the database, tables, and load data from CSV files. **Note:** You must edit the file paths in this script to match the location of your CSV files.
+- `database normalization.sql`: Contains the final normalized schema definition.
+- `pl_fixtures.sql`: Script to create the `pl_fixtures` table.
+- `pl_matches.sql`: Script to create the `pl_matches` table.
+- `pl_player_stats.sql`: Script to create the `pl_player_stats` table.
+- `pl_players.sql`: Script to create the `pl_players` table.
+- `pl_referees.sql`: Script to create the `pl_referees` table.
+- `pl_teams.sql`: Script to create the `pl_teams` table.
+- `pl_venues.sql`: Script to create the `pl_venues` table.
+
+## Queries
+
+The `Queries` directory contains scripts for working with the data:
+
+- `cleanup.sql`: Scripts for cleaning and standardizing data, such as team names and referee names.
+- `exploration.sql`: Queries for league-wide analysis, including joins, CTEs, and CASE statements.
+- `Intermediate Quiz.sql` & `quiz.sql`: SQL quizzes and exercises for practice.
+- `scratchpad.sql`: A scratchpad for writing and testing ad-hoc queries.
+
+## How to Use
+
+1.  **Database Setup**:
+    - Ensure a running MariaDB instance is available.
+    - Execute the `projects/SQL-analysis/Schema/initialization.sql` script to create the database, tables, and load the data. Update the CSV file paths within the script as required for your environment.
+2.  **Data Analysis**:
+    - Utilize the scripts in the `Queries` directory for data cleaning, exploration, and analysis.
