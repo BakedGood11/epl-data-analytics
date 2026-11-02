@@ -2,7 +2,7 @@
 
 This project demonstrates an end-to-end data engineering and analytics pipeline, investigating the relationship between expected performance metrics (xG, xGA) and actual outcomes in the 2024–2025 Premier League season. Focusing on Arsenal FC, the project showcases containerized database management, relational data modeling, SQL-based data transformation, and R-powered regression analysis built on a reproducible homelab architecture.
 
----
+***
 ## About
 This repository explores the 2024-2025 English Premier League season by building a robust data infrastructure from scratch. The goal is to demonstrate full-stack data capabilities, from provisioning a database server and designing data models to executing statistical analysis and visualizations.
 
@@ -11,23 +11,26 @@ The project workflow involves:
 - **Data Engineering (ELT):** Designing a relational database schema, followed by cleaning, normalizing, and aggregating raw datasets directly within the database using advanced SQL.
 - **Analytics & Visualization:** Connecting an R/Python client environment directly to the database to perform exploratory analysis, statistical modeling, and automated RMarkdown reporting.
 
----
+***
 ## Data Engineering & Architecture
 
 Instead of analyzing flat CSV files, this project relies on a strictly modeled client-server architecture:
 
 - **Homelab Server (Backend):** A Debian 13 server running a Dockerized MariaDB container. This acts as the centralized data warehouse, handling data storage and SQL-driven normalization.
-- **Relational Data Modeling:** Raw data was mapped into a structured relational schema, allowing seamless multi-season joins across match, player, and fixture datasets. *(See `docs/epl-schema-diagram.png` for the entity-relationship model)*
+- **Relational Data Modeling:** Raw data was mapped into a structured relational schema, allowing seamless multi-season joins across match, player, and fixture datasets. 
 - **Client Machine (Analytics):** A CachyOS (Arch Linux) workstation utilizing VSCode and RStudio to query the MariaDB instance via the `RMariaDB` connector, ensuring analytical workflows are reproducible and pipeline-driven.
 
----
+![Schema Diagram](docs/epl-schema-diagram.png)
+
+
+***
 ## Analytics Results Summary
 The data pipeline successfully fed into regression models and interactive dashboards, revealing the following key insights:
 - Found a strong positive correlation (r = 0.92) between Expected Goals (xG) and Goals For (GF).
 - Observed a decline in Arsenal’s xG (−21%) compared to the previous season.
 - Identified heavy midfield dependency for goal contribution (48% cumulative share).
 
----
+***
 ## Folder Structure
 
 ### data
@@ -46,7 +49,7 @@ Core project scripts and workflows:
 - `visuals`: Generated plots, charts, and visualizations.
 - `notebooks`: Reserved for experimental Jupyter notebooks.
 
----
+***
 ## Technical Skills Highlighted
 
 - **Data Pipeline & Infrastructure:** Docker containerization, Debian server administration, client-server integration, and reproducible workflow design.
@@ -54,7 +57,7 @@ Core project scripts and workflows:
 - **Statistical Analytics (R):** Regression, correlation, and automated reporting via RMarkdown.
 - **Visualization:** ggplot2, Tableau Public, and Metabase.
 
----
+***
 ## Software Stack & Packages
 
 - **Languages:** SQL, R 4.4, Python.
@@ -62,7 +65,7 @@ Core project scripts and workflows:
 - **R Ecosystem:** DBI, RMariaDB, tidyverse, dbplyr, ggplot2, knitr, broom.
 - **Version Control:** Git & GitHub.
 
----
+***
 ## Data Sources
 Data ingested from multiple sources to test relational joining capabilities:
 1. **EPL Player Match Data (24/25)** - [Kaggle](https://www.kaggle.com/datasets/aesika/english-premier-league-player-stats-2425)
