@@ -4,7 +4,7 @@ This project demonstrates an end-to-end data engineering and analytics pipeline,
 
 ---
 ## About
-This repository explores the 2024-2025 English Premier League season by building a robust data infrastructure from scratch. The goal is to demonstrate full-stack data capabilities—from provisioning a database server and designing data models to executing statistical analysis and visualizations.
+This repository explores the 2024-2025 English Premier League season by building a robust data infrastructure from scratch. The goal is to demonstrate full-stack data capabilities, from provisioning a database server and designing data models to executing statistical analysis and visualizations.
 
 The project workflow involves:
 - **Infrastructure & Ingestion:** Provisioning a Dockerized MariaDB instance on a Debian server to ingest multi-source Premier League data.
