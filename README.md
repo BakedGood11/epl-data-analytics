@@ -1,116 +1,73 @@
-# A(r)senal Analysis – English Premier League Data Analytics
+# A(r)senal Analysis – English Premier League Data Engineering & Analytics Pipeline
 
-This project investigates the relationship between expected performance metrics (xG, xGA) and actual outcomes in the 2024–2025 Premier League season. Focusing on Arsenal FC, it demonstrates end-to-end data analytics (SQL-based data cleaning and R-powered regression and visualization) built on a reproducible Dockerized homelab pipeline.
+This project demonstrates an end-to-end data engineering and analytics pipeline, investigating the relationship between expected performance metrics (xG, xGA) and actual outcomes in the 2024–2025 Premier League season. Focusing on Arsenal FC, the project showcases containerized database management, relational data modeling, SQL-based data transformation, and R-powered regression analysis built on a reproducible homelab architecture.
+
 ---
 ## About
-This repository explores the 2024-2025 English Premier League season using SQL, R, and a Docker-based homelab setup. The goal is to strengthen my skills in data management, analytics, and visualization while producing reproducible workflows.
+This repository explores the 2024-2025 English Premier League season by building a robust data infrastructure from scratch. The goal is to demonstrate full-stack data capabilities—from provisioning a database server and designing data models to executing statistical analysis and visualizations.
 
-The project involves:
-- Cleaning, normalizing, and aggregating datasets using SQL on a MariaDB instance.
-- Performing exploratory and statistical analysis in R, connected directly to the database.
-- Visualizing team and player-level metrics using RMarkdown and interactive dashboards.
-
-The analysis focuses on Arsenal FC and is supplemented with data from the 2023-2024 season for context.
+The project workflow involves:
+- **Infrastructure & Ingestion:** Provisioning a Dockerized MariaDB instance on a Debian server to ingest multi-source Premier League data.
+- **Data Engineering (ELT):** Designing a relational database schema, followed by cleaning, normalizing, and aggregating raw datasets directly within the database using advanced SQL.
+- **Analytics & Visualization:** Connecting an R/Python client environment directly to the database to perform exploratory analysis, statistical modeling, and automated RMarkdown reporting.
 
 ---
-## Results Summary
-Key findings from the analysis include:
+## Data Engineering & Architecture
+
+Instead of analyzing flat CSV files, this project relies on a strictly modeled client-server architecture:
+
+- **Homelab Server (Backend):** A Debian 13 server running a Dockerized MariaDB container. This acts as the centralized data warehouse, handling data storage and SQL-driven normalization.
+- **Relational Data Modeling:** Raw data was mapped into a structured relational schema, allowing seamless multi-season joins across match, player, and fixture datasets. *(See `docs/epl-schema-diagram.png` for the entity-relationship model)*
+- **Client Machine (Analytics):** A CachyOS (Arch Linux) workstation utilizing VSCode and RStudio to query the MariaDB instance via the `RMariaDB` connector, ensuring analytical workflows are reproducible and pipeline-driven.
+
+---
+## Analytics Results Summary
+The data pipeline successfully fed into regression models and interactive dashboards, revealing the following key insights:
 - Found a strong positive correlation (r = 0.92) between Expected Goals (xG) and Goals For (GF).
-
 - Observed a decline in Arsenal’s xG (−21%) compared to the previous season.
+- Identified heavy midfield dependency for goal contribution (48% cumulative share).
 
-- Identified midfield dependency for goal contribution (48% cumulative share).
 ---
-
 ## Folder Structure
 
 ### data
-Contains all datasets used in the project.
-- `cleaned_manual`: Manually cleaned CSV files.
-- `cleaned_sql`: CSV files cleaned through SQL queries.
-
-### docs
-Project documentation including schema diagrams and reference materials.
-
-### notebooks
-Reserved for Jupyter notebooks. Currently empty.
+Contains raw and processed datasets.
+- `cleaned_manual`: Initial flat files.
+- `cleaned_sql`: Datasets transformed and normalized via SQL ELT processes.
 
 ### projects
-Main analysis projects:
-- **A(r)senal Analysis – EPL 2024-2025 Season**
-  Conducted statistical and regression analysis to understand Arsenal's performance, expected goals (xG), goal efficiency, and player contributions. Produced RMarkdown reports with dynamic visualizations and tables.
+Core project scripts and workflows:
+- **SQL & Database Management:** Scripts used to design the MariaDB schema, store multi-source data, and execute data cleaning/aggregation for automated pipelines.
+- **A(r)senal Analysis (R):** R scripts that query the database to conduct statistical/regression analysis and produce dynamic RMarkdown reports.
+- **Arsenal Python Analysis:** Jupyter notebooks exploring predictive match modeling.
 
-- **Arsenal Python Analysis**
-  Work-in-progress Jupyter notebooks exploring predictive modeling for match results using Python.
-
-- **SQL & Database Management – A(r)senal Analysis**
-  Designed and managed a MariaDB database to store multi-source Premier League data. Wrote SQL queries for data cleaning, normalization, and aggregation. Integrated the database with a Docker-based homelab setup for reproducible workflows and automated data pipelines.
-
-### visuals
-Folder for storing generated plots, charts, and visualizations. Currently empty.
+### docs & visuals
+- `docs`: Project documentation, including database schema diagrams.
+- `visuals`: Generated plots, charts, and visualizations.
+- `notebooks`: Reserved for experimental Jupyter notebooks.
 
 ---
-
-## Environment
-
-- **Homelab Server**: Debian 13 running Dockerized MariaDB for data storage and normalization.
-- **Client Machine**: CachyOS (Arch Linux) with VSCode (SQL and R extensions) and RStudio for analysis and visualization.
-- **Software Stack**: R 4.4, tidyverse ecosystem, RMariaDB connector, Git with GitHub version control.
-- **Visualization Tools**: Tableau Public and Metabase.
-
----
-
-## R Packages Used
-
-- DBI
-- RMariaDB
-- ggplot2
-- dplyr
-- dbplyr
-- tidyverse
-- tidyr
-- knitr
-- kableExtra
-- zoo
-- ggrepel
-- ggpmisc
-- broom
-- ggcorrplot
-- tinytex
-
----
-
-## Data Sources
-
-1. **EPL Player Match Data (2024-2025)**  
-   [Kaggle Dataset](https://www.kaggle.com/datasets/aesika/english-premier-league-player-stats-2425)  
-
-2. **EPL Fixture Data (2024-2025)**  
-   [Kaggle Dataset](https://www.kaggle.com/datasets/secretglory/epl-fixtures-list-2024-2025)  
-
-3. **EPL Match Data (2024-2025)**  
-   [FBRef](https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures)  
-
-4. **Arsenal Squad Data (2023-2024)**  
-   [FBRef](https://fbref.com/en/squads/18bb7c10/2024-2025/matchlogs/c9/schedule/Arsenal-Scores-and-Fixtures-Premier-League)  
-
-5. **EPL Season Table (2024-2025)**  
-   [FBRef](https://fbref.com/en/comps/9/2024-2025/2024-2025-Premier-League-Stats)  
-
-6. **EPL Season Table (2023-2024)**  
-   [FBRef](https://fbref.com/en/comps/9/2023-2024/2023-2024-Premier-League-Stats)  
-
----
-
 ## Technical Skills Highlighted
 
-- SQL: Data cleaning, normalization, aggregation, and complex joins.
-- R: Statistical analysis, regression, correlation, and visualization.
-- Homelab Management: Docker-based MariaDB server, reproducible workflows, and client-server integration.
-- Data Visualization: RMarkdown, ggplot2, Tableau, and Metabase.
-- Data Pipeline Design: Combining SQL queries and R analytics for reproducible, automated analysis.
+- **Data Pipeline & Infrastructure:** Docker containerization, Debian server administration, client-server integration, and reproducible workflow design.
+- **Data Engineering (SQL):** Relational database design, data normalization, complex joins, and aggregations in MariaDB.
+- **Statistical Analytics (R):** Regression, correlation, and automated reporting via RMarkdown.
+- **Visualization:** ggplot2, Tableau Public, and Metabase.
 
 ---
+## Software Stack & Packages
 
-![Schema Diagram](docs/epl-schema-diagram.png)
-*Schema illustrating how match, player, and fixture datasets are relationally modeled in the MariaDB database, enabling multi-season joins and aggregated analytics.*
+- **Languages:** SQL, R 4.4, Python.
+- **Database:** MariaDB (Docker).
+- **R Ecosystem:** DBI, RMariaDB, tidyverse, dbplyr, ggplot2, knitr, broom.
+- **Version Control:** Git & GitHub.
+
+---
+## Data Sources
+Data ingested from multiple sources to test relational joining capabilities:
+1. **EPL Player Match Data (24/25)** - [Kaggle](https://www.kaggle.com/datasets/aesika/english-premier-league-player-stats-2425)
+2. **EPL Fixture Data (24/25)** - [Kaggle](https://www.kaggle.com/datasets/secretglory/epl-fixtures-list-2024-2025)
+3. **EPL Match Data (24/25)** - [FBRef](https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures)
+4. **Arsenal Squad Data (23/24)** - [FBRef](https://fbref.com/en/squads/18bb7c10/2024-2025/matchlogs/c9/schedule/Arsenal-Scores-and-Fixtures-Premier-League)
+5. **EPL Season Table (24/25)** - [FBRef](https://fbref.com/en/comps/9/2024-2025/2024-2025-Premier-League-Stats)
+6. **EPL Season Table (23/24)** - [FBRef](https://fbref.com/en/comps/9/2023-2024/2023-2024-Premier-League-Stats)
